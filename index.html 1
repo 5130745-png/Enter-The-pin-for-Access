@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Access Keypad</title>
+    <style>
+        :root {
+            --bg-color: #121824;
+            --panel-bg: #1e2640;
+            --display-bg: #0f141c;
+            --btn-bg: #2a3656;
+            --btn-hover: #374773;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --text-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .security-panel {
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            font-size: 1.25rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+
+        .riddle-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #94a3b8;
+            margin-bottom: 25px;
+            padding: 0 5px;
+            font-style: italic;
+        }
+
+        .display-container {
+            background-color: var(--display-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #2e3d5e;
+            position: relative;
+        }
+
+        .pin-display {
+            font-size: 2rem;
+            letter-spacing: 6px;
+            font-weight: bold;
+            transition: color 0.2s ease;
+        }
+
+        .status-message {
+            position: absolute;
+            bottom: -22px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .attempts-counter {
+            font-size: 0.8rem;
+            color: #ef4444;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .key-btn {
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 12px;
+            padding: 20px 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .key-btn:focus {
+            outline: none;
+        }
+
+        .key-btn:active {
+            transform: scale(0.96);
+            background-color: var(--btn-hover);
+        }
+
+        .key-btn.action-utility {
+            background-color: #334155;
+            font-size: 1.1rem;
+        }
+
+        .key-btn.action-utility:active {
+            background-color: #475569;
+        }
+
+        .key-btn.action-enter {
+            grid-column: span 3;
+            background-color: var(--accent-color);
+            font-size: 1rem;
+            text-transform: uppercase;
+            padding: 15px 0;
+        }
+
+        .key-btn.action-enter:active {
+            background-color: #2563eb;
+        }
+
+        .meme-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+
+        .meme-screen img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 10px;
+        }
+
+        .meme-text {
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 20px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .status-success {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        .status-error {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+        .msg-success { color: var(--success-color); }
+        .msg-error { color: var(--error-color); }
+    </style>
+</head>
+<body>
+
+    <div class="security-panel" id="securityPanel">
+        <h2>Enter the code for Access</h2>
+        <div class="riddle-text">
+            "never twice so from top go right then go down, one left don't turn around, down again goto seven, then up untill you reach 1, and the website with fun can be entered"
+        </div>
+        
+        <div class="display-container" id="displayContainer">
+            <div class="pin-display" id="pinDisplay"></div>
+            <div class="status-message" id="statusMessage"></div>
+        </div>
+
+        <div class="attempts-counter" id="attemptsCounter">Failed Attempts: 0/5</div>
+
+        <div class="keypad-grid">
+            <button class="key-btn" onclick="appendNum('1')">1</button>
+            <button class="key-btn" onclick="appendNum('2')">2</button>
+            <button class="key-btn" onclick="appendNum('3')">3</button>
+            
+            <button class="key-btn" onclick="appendNum('4')">4</button>
+            <button class="key-btn" onclick="appendNum('5')">5</button>
+            <button class="key-btn" onclick="appendNum('6')">6</button>
+            
+            <button class="key-btn" onclick="appendNum('7')">7</button>
+            <button class="key-btn" onclick="appendNum('8')">8</button>
+            <button class="key-btn" onclick="appendNum('9')">9</button>
+            
+            <button class="key-btn action-utility" onclick="clearDisplay()">Clear</button>
+            <button class="key-btn" onclick="appendNum('0')">0</button>
+            <button class="key-btn action-utility" onclick="backspace()">⌫</button>
+            
+            <button class="key-btn action-enter" onclick="submitPin()">Enter</button>
+        </div>
+    </div>
+
+    <div class="meme-screen" id="memeScreen">
+        <img src="https://media.tenor.com/PZ7aWvjYy_kAAAAC/you-are-an-idiot-laughing.gif" alt="You are an idiot">
+        <div class="meme-text">YOU ARE AN IDIOT! 😉</div>
+    </div>
+
+    <script>
+        const CORRECT_PIN = "3571"; 
+        const MAX_LENGTH = 8;
+        const TARGET_URL = "https://sites.google.com/dallasisd.org/thecoolhangandchillsite?usp=sharing";
+        const MAX_ATTEMPTS = 5;
+        
+        let currentInput = "";
+        let isLockedOut = false;
+        let failedAttempts = 0;
+        let audioCtx = null; 
+
+        const pinDisplay = document.getElementById('pinDisplay');
+        const displayContainer = document.getElementById('displayContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        const attemptsCounter = document.getElementById('attemptsCounter');
+        const securityPanel = document.getElementById('securityPanel');
+        const memeScreen = document.getElementById('memeScreen');
+
+        function playBeep(frequency, duration, type = "sine") {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = type;
+                oscillator.frequency.value = frequency;
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log("Audio trigger blocked.");
+            }
+        }
+
+        function updateDisplay() {
+            pinDisplay.textContent = currentInput;
+        }
+
+        function appendNum(num) {
+            if (isLockedOut) return;
+            playBeep(880, 0.08, "sine");
+            if (statusMessage.textContent !== "") {
+                resetUIEffects();
+            }
+            if (currentInput.length < MAX_LENGTH) {
+                currentInput += num;
+                updateDisplay();
+            }
+        }
+
+        function clearDisplay() {
+            if (isLockedOut) return;
+            playBeep(440, 0.1, "triangle");
+            currentInput = "";
+            updateDisplay();
+            resetUIEffects();
+        }
+
+        function backspace() {
+            if (isLockedOut) return;
+            playBeep(520, 0.08, "sine");
+            if (currentInput.length > 0) {
+                currentInput = currentInput.slice(0, -1);
+                updateDisplay();
+            }
+            if (statusMessage.textContent !== "") {
+                resetUIEffects();
+            }
+        }
+
+        function submitPin() {
+            if (isLockedOut || currentInput.length === 0) return;
+
+            if (currentInput === CORRECT_PIN) {
+                handleValidation(true, "ACCESS GRANTED");
+            } else {
+                failedAttempts++;
+                attemptsCounter.textContent = `Failed Attempts: ${failedAttempts}/5`;
+                
+                if (failedAttempts >= MAX_ATTEMPTS) {
+                    triggerMemeLockout();
+                } else {
+                    handleValidation(false, "INVALID PIN");
+                }
+            }
+        }
+
+        function triggerMemeLockout() {
+            isLockedOut = true;
+            playBeep(100, 0.8, "sawtooth");
+            
+            setTimeout(() => {
+                securityPanel.style.display = "none";
+                memeScreen.style.display = "flex";
+            }, 500);
+        }
+
+        function handleValidation(isSuccess, message) {
+            isLockedOut = true; 
+            
+            if (isSuccess) {
+                displayContainer.classList.add('status-success');
+                statusMessage.className = "status-message msg-success";
+                statusMessage.textContent = message;
+                playBeep(587.33, 0.1, "sine");
+                setTimeout(() => playBeep(880, 0.2, "sine"), 100);
+                
+                setTimeout(() => {
+                    window.location.href = TARGET_URL;
+                }, 1500);
+                
+            } else {
+                displayContainer.classList.add('status-error');
+                statusMessage.className = "status-message msg-error";
+                statusMessage.textContent = message;
+                playBeep(150, 0.3, "sawtooth");
+
+                setTimeout(() => {
+                    currentInput = "";
+                    updateDisplay();
+                    resetUIEffects();
+                    isLockedOut = false;
+                }, 1500);
+            }
+        }
+
+        function resetUIEffects() {
+            displayContainer.classList.remove('status-success', 'status-error');
+            statusMessage.textContent = "";
+        }
+    </script>
+</body>
+</html>
